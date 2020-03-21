@@ -3,4 +3,10 @@ project(ECG)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(ECG main.cpp vec2.cpp vec2.h vec3.cpp vec3.h vec4.cpp vec4.h)
+file(GLOB ECG_SRC
+        "*.h"
+        "*.cpp"
+        )
+
+
+add_executable(ECG ${ECG_SRC})
