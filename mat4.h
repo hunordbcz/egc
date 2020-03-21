@@ -12,7 +12,7 @@
 #include "vec4.h"
 #include "mat3.h"
 
-namespace egc {
+namespace ecg {
     class mat4 {
     public:
         //==============================================

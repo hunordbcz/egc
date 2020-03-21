@@ -14,7 +14,7 @@
 #include <limits>
 #include "vec4.h"
 
-namespace egc {
+namespace ecg {
 
     class vec3 {
     public:
@@ -61,7 +61,7 @@ namespace egc {
             z = srcVector.z;
         }
 
-        vec3(const egc::vec4 &srcVector) {
+        vec3(const ecg::vec4 &srcVector) {
             x = srcVector.x;
             y = srcVector.y;
             z = srcVector.z;

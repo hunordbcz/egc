@@ -1,8 +1,7 @@
 #include "mat4.h"
 #include "mat3.h"
-#include <math.h>
 
-namespace egc {
+namespace ecg {
     //methods used as GETTERS and SETTERS -> to access the matrix elements
     float &mat4::at(int i, int j) {
         return matrixData[i + 4 * j];

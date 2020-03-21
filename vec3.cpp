@@ -4,7 +4,7 @@
 
 #include "vec3.h"
 
-namespace egc {
+namespace ecg {
 
     vec3 &vec3::operator=(const vec3 &srcVector) {
         this->x = srcVector.x;

@@ -16,7 +16,7 @@
 #include "vec3.h"
 #include "vec4.h"
 
-namespace egc {
+namespace ecg {
 
     class vec2 {
     public:
@@ -52,12 +52,12 @@ namespace egc {
             y = srcVector.y;
         }
 
-        vec2(const egc::vec3 &srcVector) {
+        vec2(const ecg::vec3 &srcVector) {
             x = srcVector.x;
             y = srcVector.y;
         }
 
-        vec2(const egc::vec4 &srcVector) {
+        vec2(const ecg::vec4 &srcVector) {
             x = srcVector.x;
             y = srcVector.y;
         }

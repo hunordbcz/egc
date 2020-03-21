@@ -1,4 +1,4 @@
-namespace egc {
+namespace ecg {
 
     int testMat3Implementation();
 

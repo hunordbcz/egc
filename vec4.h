@@ -14,7 +14,7 @@
 #include <iostream>
 #include <limits>
 
-namespace egc {
+namespace ecg {
 
     class vec4 {
     public:

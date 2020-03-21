@@ -1,18 +1,6 @@
 #include "mat3.h"
 
-namespace egc {
-
-    mat3::mat3(float m0, float m1, float m2, float m3, float m4, float m5, float m6, float m7, float m8) {
-        matrixData[0] = m0;
-        matrixData[1] = m1;
-        matrixData[2] = m2;
-        matrixData[3] = m3;
-        matrixData[4] = m4;
-        matrixData[5] = m5;
-        matrixData[6] = m6;
-        matrixData[7] = m7;
-        matrixData[8] = m8;
-    }
+namespace ecg {
 
     //methods used as GETTERS and SETTERS - to access the matrix elements
     float &mat3::at(int i, int j) {
