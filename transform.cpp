@@ -4,6 +4,8 @@
 #include <cmath>
 
 namespace ecg {
+
+    //transformation matrices in 2D
     mat3 translate(const vec2 translateArray) {
         mat3 result;
         result.at(0, 2) = translateArray.x;
