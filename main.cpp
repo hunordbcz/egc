@@ -135,6 +135,23 @@ int main(int argc, char **argv) {
                 float posYMiddle = (P1.y + P2.y + P3.y + P4.y) / 4;
                 float posXMin = std::min(std::min(P1.x, P2.x), std::min(P3.x, P4.x));
                 float posYMin = std::min(std::min(P1.y, P2.y), std::min(P3.y, P4.y));
+                float minSum = std::min(std::min(P1.x + P1.y, P2.x + P2.y), std::min(P3.x + P3.y, P4.x + P4.y));
+                vec2 topLeft;
+
+                if (minSum == P1.x + P1.y) {
+                    topLeft.x = P1.x;
+                    topLeft.y = P1.y;
+                } else if (minSum == P2.x + P2.y) {
+                    topLeft.x = P2.x;
+                    topLeft.y = P2.y;
+                } else if (minSum == P3.x + P3.y) {
+                    topLeft.x = P3.x;
+                    topLeft.y = P3.y;
+                } else if (minSum == P4.x + P4.y) {
+                    topLeft.x = P4.x;
+                    topLeft.y = P4.y;
+                }
+
                 switch (currentEvent.key.keysym.sym) {
                     case SDLK_RIGHT:
                         trans1 = translate(posXMiddle, posYMiddle);
@@ -158,9 +175,9 @@ int main(int argc, char **argv) {
                         break;
 
                     case SDLK_UP:
-                        trans1 = translate(posXMin, posYMin);
+                        trans1 = translate(topLeft.x, topLeft.y);
                         rot1 = scale(1.1, 1.1);
-                        transInv = translate(-posXMin, -posYMin);
+                        transInv = translate(-topLeft.x, -topLeft.y);
                         trans1 = trans1 * rot1 * transInv;
                         P1 = trans1 * P1;
                         P2 = trans1 * P2;
@@ -169,9 +186,9 @@ int main(int argc, char **argv) {
                         break;
 
                     case SDLK_DOWN:
-                        trans1 = translate(posXMin, posYMin);
+                        trans1 = translate(topLeft.x, topLeft.y);
                         rot1 = scale(0.9, 0.9);
-                        transInv = translate(-posXMin, -posYMin);
+                        transInv = translate(-topLeft.x, -topLeft.y);
                         trans1 = trans1 * rot1 * transInv;
                         P1 = trans1 * P1;
                         P2 = trans1 * P2;
