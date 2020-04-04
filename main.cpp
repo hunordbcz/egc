@@ -6,28 +6,25 @@
 //
 
 #include <iostream>
-#include "testMatrix.h"
-#include "testTransform.h"
-#include "testVector.h"
 #include "SDL2/SDL.h"
-#include "vec3.h"
-#include "mat3.h"
-#include "math.h"
-#include "algorithm"
-#include "transform.h"
+#include "clip.h"
 
 using namespace ecg;
 
-SDL_Renderer *windowRenderer;
+// define rectangle vertices
+vec3 p1{0.0f, 0.0f, 1.0f};
+vec3 p2{0.0f, 0.0f, 1.0f};
+
+//define clipping window
+std::vector<vec3> clipWindow;
 
 //define window dimensions
-const int WINDOW_WIDTH = 640;
-const int WINDOW_HEIGHT = 480;
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 600;
 
 SDL_Window *window = NULL;
+SDL_Renderer *windowRenderer = NULL;
 SDL_Event currentEvent;
-
-SDL_Rect rectangleCoordinates = {100, 100, 200, 200};
 
 bool quit = false;
 
@@ -78,31 +75,26 @@ void destroyWindow() {
     SDL_Quit();
 }
 
-int main(int argc, char **argv) {
+//Create the corners of the clipping window (drawn as a rectangle)
+void initClipWindow() {
+    clipWindow.push_back(vec3(250.0f, 200.0f, 1.0f));
+    clipWindow.push_back(vec3(550.0f, 200.0f, 1.0f));
+    clipWindow.push_back(vec3(550.0f, 400.0f, 1.0f));
+    clipWindow.push_back(vec3(250.0f, 400.0f, 1.0f));
+}
 
-//    int nrOfErrors = 0;
-//
-//    nrOfErrors += ecg::testVec2Implementation();
-//    nrOfErrors += ecg::testVec3Implementation();
-//    nrOfErrors += ecg::testVec4Implementation();
-//    nrOfErrors += ecg::testMat3Implementation();
-//    nrOfErrors += ecg::testMat4Implementation();
-//    nrOfErrors += ecg::test2DTransformImplementation();
-//    nrOfErrors += ecg::test3DTransformImplementation();
-//
-//    std::cout << "Number of errors: " << nrOfErrors << std::endl;
-//
-//    std::getchar();
+int main(int argc, char **argv) {
+    (void) argc;
+    (void) argv;
+
     if (!initWindow()) {
         std::cout << "Failed to initialize" << std::endl;
         return -1;
     }
 
-    vec3 P1(100, 100, 1),
-            P2(100, 200, 1),
-            P3(200, 100, 1),
-            P4(200, 200, 1);
-
+    initClipWindow();
+    std::cout << "Draw the line you want to clip witha drang-n-drop mouse action!" << "\n";
+    std::cout << "Press the \'c\' key to apply the Cohen-Sutherland clipping algorithm!" << "\n\n";
 
     while (!quit) {
         //Handle events on queue
@@ -115,101 +107,57 @@ int main(int argc, char **argv) {
             //Mouse event -> pressed button
             if (currentEvent.type == SDL_MOUSEBUTTONDOWN) {
                 if (currentEvent.button.button == SDL_BUTTON_LEFT) {
+                    //left mouse button was pressed
                     SDL_GetMouseState(&mouseX, &mouseY);
-                    std::cout << "Mouse click => " << "x: " << mouseX << ", y: " << mouseY << std::endl;
+                    p1.x = p2.x = (float) mouseX;
+                    p1.y = p2.y = (float) mouseY;
                 }
             }
 
             //Mouse event -> mouse movement
             if (currentEvent.type == SDL_MOUSEMOTION) {
-                if (currentEvent.button.button == SDL_BUTTON_LEFT) {
+                if (currentEvent.motion.state & SDL_BUTTON_LMASK) {
+                    //left button pressed while moving
                     SDL_GetMouseState(&mouseX, &mouseY);
-                    std::cout << "Mouse move => " << "x: " << mouseX << ", y: " << mouseY << std::endl;
+                    p2.x = (float) mouseX;
+                    p2.y = (float) mouseY;
                 }
             }
 
             //Keyboard event
             if (currentEvent.type == SDL_KEYDOWN) {
-                mat3 trans1, rot1, transInv;
-                float posXMiddle = (P1.x + P2.x + P3.x + P4.x) / 4;
-                float posYMiddle = (P1.y + P2.y + P3.y + P4.y) / 4;
-                float posXMin = std::min(std::min(P1.x, P2.x), std::min(P3.x, P4.x));
-                float posYMin = std::min(std::min(P1.y, P2.y), std::min(P3.y, P4.y));
-                float minSum = std::min(std::min(P1.x + P1.y, P2.x + P2.y), std::min(P3.x + P3.y, P4.x + P4.y));
-                vec2 topLeft;
-
-                if (minSum == P1.x + P1.y) {
-                    topLeft.x = P1.x;
-                    topLeft.y = P1.y;
-                } else if (minSum == P2.x + P2.y) {
-                    topLeft.x = P2.x;
-                    topLeft.y = P2.y;
-                } else if (minSum == P3.x + P3.y) {
-                    topLeft.x = P3.x;
-                    topLeft.y = P3.y;
-                } else if (minSum == P4.x + P4.y) {
-                    topLeft.x = P4.x;
-                    topLeft.y = P4.y;
-                }
-
                 switch (currentEvent.key.keysym.sym) {
-                    case SDLK_RIGHT:
-                        trans1 = translate(posXMiddle, posYMiddle);
-                        rot1 = rotate(10);
-                        transInv = translate(-posXMiddle, -posYMiddle);
-                        trans1 = trans1 * rot1 * transInv;
-                        P1 = trans1 * P1;
-                        P2 = trans1 * P2;
-                        P3 = trans1 * P3;
-                        P4 = trans1 * P4;
+                    case SDLK_c:
+                        std::cout << "Applying Cohen-Sutherland clipping" << "\n";
+                        //Applies the Cohen-Sutherland clipping algorithm -> implemented by you
+                        if (lineClip_CohenSutherland(clipWindow, p1, p2) == -1)
+                            p1.x = p2.x = p1.y = p2.y = 0.0f;
                         break;
-                    case SDLK_LEFT:
-                        trans1 = translate(posXMiddle, posYMiddle);
-                        rot1 = rotate(-10);
-                        transInv = translate(-posXMiddle, -posYMiddle);
-                        trans1 = trans1 * rot1 * transInv;
-                        P1 = trans1 * P1;
-                        P2 = trans1 * P2;
-                        P3 = trans1 * P3;
-                        P4 = trans1 * P4;
+                    case SDLK_ESCAPE:
+                        quit = true;
                         break;
-
-                    case SDLK_UP:
-                        trans1 = translate(topLeft.x, topLeft.y);
-                        rot1 = scale(1.1, 1.1);
-                        transInv = translate(-topLeft.x, -topLeft.y);
-                        trans1 = trans1 * rot1 * transInv;
-                        P1 = trans1 * P1;
-                        P2 = trans1 * P2;
-                        P3 = trans1 * P3;
-                        P4 = trans1 * P4;
+                    default:
                         break;
-
-                    case SDLK_DOWN:
-                        trans1 = translate(topLeft.x, topLeft.y);
-                        rot1 = scale(0.9, 0.9);
-                        transInv = translate(-topLeft.x, -topLeft.y);
-                        trans1 = trans1 * rot1 * transInv;
-                        P1 = trans1 * P1;
-                        P2 = trans1 * P2;
-                        P3 = trans1 * P3;
-                        P4 = trans1 * P4;
-                        break;
-//
-//                    default:
-//                        break;
                 }
             }
-
+            //Paint the white background
             SDL_SetRenderDrawColor(windowRenderer, 255, 255, 255, 255);
             SDL_RenderClear(windowRenderer);
 
+            //draw the clipping window
+            SDL_SetRenderDrawColor(windowRenderer, 0, 128, 0, 255);
+            for (size_t i = 0; i < clipWindow.size(); i++)
+                SDL_RenderDrawLine(
+                        windowRenderer,
+                        (int) clipWindow.at(i).x,
+                        (int) clipWindow.at(i).y,
+                        (int) clipWindow.at((i + 1) % clipWindow.size()).x,
+                        (int) clipWindow.at((i + 1) % clipWindow.size()).y);
 
+            //draw the line
             SDL_SetRenderDrawColor(windowRenderer, 0, 0, 255, 255);
-            SDL_RenderDrawLine(windowRenderer, P1.x, P1.y, P2.x, P2.y);
-            SDL_RenderDrawLine(windowRenderer, P1.x, P1.y, P3.x, P3.y);
-            SDL_RenderDrawLine(windowRenderer, P2.x, P2.y, P4.x, P4.y);
-            SDL_RenderDrawLine(windowRenderer, P3.x, P3.y, P4.x, P4.y);
+            SDL_RenderDrawLine(windowRenderer, (int) p1.x, (int) p1.y, (int) p2.x, (int) p2.y);
+
 
             SDL_RenderPresent(windowRenderer);
         }
