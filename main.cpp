@@ -11,7 +11,6 @@
 
 using namespace ecg;
 
-// define rectangle vertices
 vec3 p1{0.0f, 0.0f, 1.0f};
 vec3 p2{0.0f, 0.0f, 1.0f};
 
@@ -78,9 +77,9 @@ void destroyWindow() {
 //Create the corners of the clipping window (drawn as a rectangle)
 void initClipWindow() {
     clipWindow.push_back(vec3(250.0f, 200.0f, 1.0f));
-    clipWindow.push_back(vec3(550.0f, 200.0f, 1.0f));
-    clipWindow.push_back(vec3(550.0f, 400.0f, 1.0f));
     clipWindow.push_back(vec3(250.0f, 400.0f, 1.0f));
+    clipWindow.push_back(vec3(550.0f, 400.0f, 1.0f));
+    clipWindow.push_back(vec3(550.0f, 200.0f, 1.0f));
 }
 
 int main(int argc, char **argv) {
@@ -131,6 +130,12 @@ int main(int argc, char **argv) {
                         std::cout << "Applying Cohen-Sutherland clipping" << "\n";
                         //Applies the Cohen-Sutherland clipping algorithm -> implemented by you
                         if (lineClip_CohenSutherland(clipWindow, p1, p2) == -1)
+                            p1.x = p2.x = p1.y = p2.y = 0.0f;
+                        break;
+                    case SDLK_v:
+                        std::cout << "Applying Cyrus-Beck clipping" << "\n";
+                        //Applies the Cyrus-Beck clipping algorithm -> implemented by you
+                        if (lineClip_CyrusBeck(clipWindow, p1, p2) == -1)
                             p1.x = p2.x = p1.y = p2.y = 0.0f;
                         break;
                     case SDLK_ESCAPE:

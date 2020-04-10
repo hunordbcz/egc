@@ -14,7 +14,7 @@ namespace ecg {
     //Cohen-Sutherland clipping algorithm
     //clipWindow specifies the vertices that define the clipping area in conterclockwise order
     //and must be a rectangular window
-    std::vector<int> computeCSCode(const std::vector<vec3> &clipWindow, const vec3 p);
+    std::vector<int> computeCSCode(const std::vector<vec3> &clipWindow, const vec3 &p);
 
     bool simpleRejection(std::vector<int> cod1, std::vector<int> cod2);
 
@@ -22,4 +22,6 @@ namespace ecg {
 
     //function returns -1 if the line segment cannot be clipped
     int lineClip_CohenSutherland(const std::vector<vec3> &clipWindow, vec3 &p1, vec3 &p2);
+
+    int lineClip_CyrusBeck(std::vector<vec3> clipWindow, vec3 &p1, vec3 &p2);
 }
