@@ -7,27 +7,23 @@
 
 #include <iostream>
 #include "SDL2/SDL.h"
-#include "clip.h"
-
-using namespace ecg;
-
-vec3 p1{0.0f, 0.0f, 1.0f};
-vec3 p2{0.0f, 0.0f, 1.0f};
-
-//define clipping window
-std::vector<vec3> clipWindow;
+#include "bresenham.h"
 
 //define window dimensions
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 600;
+const int WINDOW_WIDTH = 640;
+const int WINDOW_HEIGHT = 480;
 
+//The window
 SDL_Window *window = NULL;
-SDL_Renderer *windowRenderer = NULL;
+//The window renderer
+SDL_Renderer *renderer = NULL;
 SDL_Event currentEvent;
 
 bool quit = false;
-
 int mouseX, mouseY;
+
+BresenhamLine myLine;
+BresenhamCircle myCircle;
 
 bool initWindow() {
     bool success = true;
@@ -45,20 +41,15 @@ bool initWindow() {
             std::cout << "Failed to create window: " << SDL_GetError() << std::endl;
             success = false;
         } else {
-            // Create a renderer for the current window
-            windowRenderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-            if (windowRenderer == NULL) {
-                std::cout << "Failed to create the renderer: " << SDL_GetError() << std::endl;
+            //Create renderer for window
+            renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+            if (renderer == NULL) {
+                printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
                 success = false;
             } else {
-                //Set background color
-                SDL_SetRenderDrawColor(windowRenderer, 255, 255, 255, 255);
-
-                //Apply background color
-                SDL_RenderClear(windowRenderer);
+                //Initialize renderer color
+                SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
             }
-
         }
     }
 
@@ -67,104 +58,94 @@ bool initWindow() {
 
 void destroyWindow() {
     //Destroy window
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     window = NULL;
-
+    renderer = NULL;
     //Quit SDL
     SDL_Quit();
 }
 
-//Create the corners of the clipping window (drawn as a rectangle)
-void initClipWindow() {
-    clipWindow.push_back(vec3(250.0f, 200.0f, 1.0f));
-    clipWindow.push_back(vec3(250.0f, 400.0f, 1.0f));
-    clipWindow.push_back(vec3(550.0f, 400.0f, 1.0f));
-    clipWindow.push_back(vec3(550.0f, 200.0f, 1.0f));
+void handleMouseEvents() {
+    //Mouse event -> pressed button
+    if (currentEvent.type == SDL_MOUSEBUTTONDOWN) {
+        if (currentEvent.button.button == SDL_BUTTON_LEFT) {
+            SDL_GetMouseState(&mouseX, &mouseY);
+            myLine.startX = myLine.endX = mouseX;
+            myLine.startY = myLine.endY = mouseY;
+        }
+
+        if (currentEvent.button.button == SDL_BUTTON_RIGHT) {
+            SDL_GetMouseState(&mouseX, &mouseY);
+            myCircle.centerX = mouseX;
+            myCircle.centerY = mouseY;
+        }
+    }
+
+    //Mouse event -> mouse movement
+    if (currentEvent.type == SDL_MOUSEMOTION) {
+        if (currentEvent.button.button & SDL_BUTTON_LMASK) {
+            SDL_GetMouseState(&mouseX, &mouseY);
+            myLine.endX = mouseX;
+            myLine.endY = mouseY;
+        }
+
+        if (currentEvent.button.button & SDL_BUTTON_RMASK) {
+            SDL_GetMouseState(&mouseX, &mouseY);
+            myCircle.radius = static_cast<int> (
+                    sqrt(static_cast<float>((mouseX - myCircle.centerX) * (mouseX - myCircle.centerX) +
+                                            (mouseY - myCircle.centerY) * (mouseY - myCircle.centerY)))
+            );
+        }
+    }
 }
 
-int main(int argc, char **argv) {
-    (void) argc;
-    (void) argv;
+void handleKeyboardEvents() {
+    //Keyboard event
+    if (currentEvent.type == SDL_KEYDOWN) {
+        switch (currentEvent.key.keysym.sym) {
+            case SDLK_ESCAPE:
+                quit = true;
+                break;
 
+            default:
+                break;
+        }
+    }
+}
+
+
+int main(int argc, char *argv[]) {
     if (!initWindow()) {
         std::cout << "Failed to initialize" << std::endl;
         return -1;
     }
 
-    initClipWindow();
-    std::cout << "Draw the line you want to clip witha drang-n-drop mouse action!" << "\n";
-    std::cout << "Press the \'c\' key to apply the Cohen-Sutherland clipping algorithm!" << "\n\n";
-
     while (!quit) {
         //Handle events on queue
-        if (SDL_WaitEvent(&currentEvent) != 0) {
+        while (SDL_PollEvent(&currentEvent) != 0) {
             //User requests quit
             if (currentEvent.type == SDL_QUIT) {
                 quit = true;
             }
 
-            //Mouse event -> pressed button
-            if (currentEvent.type == SDL_MOUSEBUTTONDOWN) {
-                if (currentEvent.button.button == SDL_BUTTON_LEFT) {
-                    //left mouse button was pressed
-                    SDL_GetMouseState(&mouseX, &mouseY);
-                    p1.x = p2.x = (float) mouseX;
-                    p1.y = p2.y = (float) mouseY;
-                }
-            }
+            handleMouseEvents();
+            handleKeyboardEvents();
 
-            //Mouse event -> mouse movement
-            if (currentEvent.type == SDL_MOUSEMOTION) {
-                if (currentEvent.motion.state & SDL_BUTTON_LMASK) {
-                    //left button pressed while moving
-                    SDL_GetMouseState(&mouseX, &mouseY);
-                    p2.x = (float) mouseX;
-                    p2.y = (float) mouseY;
-                }
-            }
+            //Clear screen
+            SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+            SDL_RenderClear(renderer);
 
-            //Keyboard event
-            if (currentEvent.type == SDL_KEYDOWN) {
-                switch (currentEvent.key.keysym.sym) {
-                    case SDLK_c:
-                        std::cout << "Applying Cohen-Sutherland clipping" << "\n";
-                        //Applies the Cohen-Sutherland clipping algorithm -> implemented by you
-                        if (lineClip_CohenSutherland(clipWindow, p1, p2) == -1)
-                            p1.x = p2.x = p1.y = p2.y = 0.0f;
-                        break;
-                    case SDLK_v:
-                        std::cout << "Applying Cyrus-Beck clipping" << "\n";
-                        //Applies the Cyrus-Beck clipping algorithm -> implemented by you
-                        if (lineClip_CyrusBeck(clipWindow, p1, p2) == -1)
-                            p1.x = p2.x = p1.y = p2.y = 0.0f;
-                        break;
-                    case SDLK_ESCAPE:
-                        quit = true;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            //Paint the white background
-            SDL_SetRenderDrawColor(windowRenderer, 255, 255, 255, 255);
-            SDL_RenderClear(windowRenderer);
+            //Draw Bresenham line
+            SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
+            BresenhamDraw(myLine, renderer);
 
-            //draw the clipping window
-            SDL_SetRenderDrawColor(windowRenderer, 0, 128, 0, 255);
-            for (size_t i = 0; i < clipWindow.size(); i++)
-                SDL_RenderDrawLine(
-                        windowRenderer,
-                        (int) clipWindow.at(i).x,
-                        (int) clipWindow.at(i).y,
-                        (int) clipWindow.at((i + 1) % clipWindow.size()).x,
-                        (int) clipWindow.at((i + 1) % clipWindow.size()).y);
+            //Draw Bresenham circle
+            SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0xFF, 0x00);
+            BresenhamDraw(myCircle, renderer);
 
-            //draw the line
-            SDL_SetRenderDrawColor(windowRenderer, 0, 0, 255, 255);
-            SDL_RenderDrawLine(windowRenderer, (int) p1.x, (int) p1.y, (int) p2.x, (int) p2.y);
-
-
-            SDL_RenderPresent(windowRenderer);
+            //Update screen
+            SDL_RenderPresent(renderer);
         }
     }
 
