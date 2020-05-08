@@ -29,6 +29,8 @@ namespace ecg {
 
     void findBoundingBox(const std::vector<ecg::vec4> &triangleVertices, std::vector<vec2> &boundingBox);
 
+    vec4 getColor(const std::vector<ecg::vec4> &triangleColors, float alpha, float beta, float gamma);
+
     void rasterizeTriangle(SDL_Renderer *renderer, const std::vector<ecg::vec4> &triangleVertices,
                            const std::vector<ecg::vec4> &triangleColors) {
         std::vector<ecg::vec2> boundingBox;
@@ -37,25 +39,30 @@ namespace ecg {
 
         for (float x = boundingBox.at(0).x; x <= boundingBox.at(1).x; x++) {
             for (float y = boundingBox.at(0).y; y <= boundingBox.at(1).y; y++) {
-                vec2 point(x, y);
-                computeAlphaBetaGamma(triangleVertices, point, alpha, beta, gamma);
-                if (0 < alpha < 1 &&
-                    0 < beta < 1 &&
-                    0 < gamma < 1) {
-                    vec4 color;
-                    color.x = alpha * triangleColors.at(0).x + beta * triangleColors.at(1).x +
-                              gamma * triangleColors.at(2).x;
-                    color.y = alpha * triangleColors.at(0).y + beta * triangleColors.at(1).y +
-                              gamma * triangleColors.at(2).y;
-                    color.z = alpha * triangleColors.at(0).z + beta * triangleColors.at(1).z +
-                              gamma * triangleColors.at(2).z;
-                    color.w = alpha * triangleColors.at(0).w + beta * triangleColors.at(1).w +
-                              gamma * triangleColors.at(2).w;
+                vec2 pixel(x, y);
+                computeAlphaBetaGamma(triangleVertices, pixel, alpha, beta, gamma);
+
+                if (0 < alpha && alpha < 1 && 0 < beta && beta < 1 && 0 < gamma && gamma < 1) {
+                    vec4 color = getColor(triangleColors, alpha, beta, gamma);
+
                     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
                     SDL_RenderDrawPoint(renderer, x, y);
                 }
             }
         }
+    }
+
+    vec4 getColor(const std::vector<ecg::vec4> &triangleColors, float alpha, float beta, float gamma) {
+        vec4 color;
+        color.x = alpha * triangleColors.at(0).x + beta * triangleColors.at(1).x +
+                  gamma * triangleColors.at(2).x;
+        color.y = alpha * triangleColors.at(0).y + beta * triangleColors.at(1).y +
+                  gamma * triangleColors.at(2).y;
+        color.z = alpha * triangleColors.at(0).z + beta * triangleColors.at(1).z +
+                  gamma * triangleColors.at(2).z;
+        color.w = alpha * triangleColors.at(0).w + beta * triangleColors.at(1).w +
+                  gamma * triangleColors.at(2).w;
+        return color;
     }
 
     void findBoundingBox(const std::vector<ecg::vec4> &triangleVertices, std::vector<vec2> &boundingBox) {
