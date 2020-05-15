@@ -10,12 +10,8 @@
 #include "projection.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
-
 #include "tiny_obj_loader.h"
 
-//define window dimensions
-const int WINDOW_WIDTH = 512;
-const int WINDOW_HEIGHT = 512;
 
 //The window
 SDL_Window *window = NULL;
@@ -24,6 +20,12 @@ SDL_Renderer *renderer = NULL;
 SDL_Event currentEvent;
 float cameraZ = 3.0f;
 
+int mouseX, mouseY;
+float rotationAngle = 80.0f;
+
+bool backFaceCulling = true;
+bool displayNormals = false;
+bool quit = false;
 
 std::vector<tinyobj::shape_t> readOBJ(std::string inputfile) {
     std::vector<tinyobj::shape_t> shapes;
@@ -67,36 +69,6 @@ std::vector<tinyobj::shape_t> readOBJ(std::string inputfile) {
     return shapes;
 }
 
-bool initWindow() {
-    bool success = true;
-
-    //Try to initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cout << "SDL initialization failed" << std::endl;
-        success = false;
-    } else {
-        //Try to create the window
-        window = SDL_CreateWindow("SDL Hello World Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                  WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI);
-
-        if (window == NULL) {
-            std::cout << "Failed to create window: " << SDL_GetError() << std::endl;
-            success = false;
-        } else {
-            //Create renderer for window
-            renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-            if (renderer == NULL) {
-                printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
-                success = false;
-            } else {
-                //Initialize renderer color
-                SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-            }
-        }
-    }
-
-    return success;
-}
 
 void destroyWindow() {
     //Destroy window
@@ -108,53 +80,65 @@ void destroyWindow() {
     SDL_Quit();
 }
 
-void validateViewingTransformations() {
-    float a1[] = {300.0f, 0.0f, 0.0f, 0.0f, 0.0f, -300.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 350.0f, 350.0f, 0.0f,
-                  1.0f};
+void handleMouseEvents() {
+    //Mouse event -> pressed button
+    if (currentEvent.type == SDL_MOUSEBUTTONDOWN) {
+        if (currentEvent.button.button == SDL_BUTTON_LEFT) {
+            SDL_GetMouseState(&mouseX, &mouseY);
 
-    ecg::mat4 m1(a1), m2;
+        }
 
-    m2 = ecg::defineViewTransformMatrix(50.0f, 50.0f, 600, 600);
-    if (m1 == m2)
-        std::cout << "Correct viewTransformMatrix" << std::endl;
-    else
-        std::cout << "Incorrect viewTransformMatrix" << std::endl;
+        if (currentEvent.button.button == SDL_BUTTON_RIGHT) {
+            SDL_GetMouseState(&mouseX, &mouseY);
 
-    float a2[] = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.920967f, 0.38964f, 0.0f, 0.0f, -0.38964f, 0.920967f, 1.0f, 0.3f,
-                  -3.8964, -4.90592, 1.0f};
+        }
+    }
 
-    ecg::mat4 m3(a2), m4;
+}
 
-    ecg::Camera tempCamera;
-    tempCamera = ecg::Camera(ecg::vec3(-0.3f, 5.5f, cameraZ), ecg::vec3(-0.3f, 0.0f, -10.0f),
-                             ecg::vec3(0.0f, 1.0f, 0.0f));
-    m4 = ecg::defineCameraMatrix(tempCamera);
+void handleKeyboardEvents() {
+    //Keyboard event
+    if (currentEvent.type == SDL_KEYDOWN) {
+        switch (currentEvent.key.keysym.sym) {
+            case SDLK_ESCAPE:
+                quit = true;
+                break;
 
-    if (m3 == m4)
-        std::cout << "Correct camera matrix" << std::endl;
-    else
-        std::cout << "Incorrect camera matrix" << std::endl;
+            case SDLK_a:
+                rotationAngle += 10.0f;
+                break;
 
-    float a3[] = {-0.61737, 0.0f, 0.0f, 0.0f, 0.0f, -0.61737, 0.0f, 0.0f, 0.0f, 0.0f, -1.002, 1.0f, 0.0f, 0.0f, -0.2002,
-                  0.0f};
+            case SDLK_d:
+                rotationAngle -= 10.0f;
+                break;
 
-    ecg::mat4 m5(a3), m6;
+            case SDLK_w:
+                cameraZ -= 0.5f;
+                break;
 
-    m6 = ecg::definePerspectiveProjectionMatrix(90.0f, 1.0, -0.1f, -100.0f);
+            case SDLK_s:
+                cameraZ += 0.5f;
+                break;
 
-    if (m5 == m6)
-        std::cout << "Correct perspective matrix" << std::endl;
-    else
-        std::cout << "Incorrect perspective matrix" << std::endl;
+            case SDLK_z:
+                backFaceCulling = true;
+                break;
 
-    ecg::vec4 v(150, 330, 10, 5);
-    ecg::perspectiveDivide(v);
-    ecg::vec4 v1(30, 66, 2, 1);
-    float w = v.w;
+            case SDLK_c:
+                backFaceCulling = false;
+                break;
 
-    if (v.x == v1.x && v.y == v1.y && v.z == v1.z && v.w == v1.w) {
-        std::cout << "Correct perspective divide" << std::endl;
-    } else {
-        std::cout << "Incorrect perspective divide" << std::endl;
+            case SDLK_q:
+                displayNormals = true;
+                break;
+
+            case SDLK_e:
+                displayNormals = false;
+                break;
+
+            default:
+                break;
+        }
     }
 }
+

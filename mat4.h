@@ -73,7 +73,8 @@ namespace ecg {
 
         bool operator==(const mat4 &srcMatrix) const {
             for (int i = 0; i < 16; i++)
-                if (std::abs(matrixData[i] - srcMatrix.matrixData[i]) >= std::numeric_limits<float>::epsilon()) {
+                if (std::fabs(matrixData[i] - srcMatrix.matrixData[i]) >
+                    10000000 * std::numeric_limits<float>::epsilon()) {
                     return false;
                 }
             return true;

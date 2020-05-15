@@ -47,31 +47,31 @@
 
 namespace tinyobj {
 
-    typedef struct {
-        std::string name;
+typedef struct {
+    std::string name;
 
-        float ambient[3];
-        float diffuse[3];
-        float specular[3];
-        float transmittance[3];
-        float emission[3];
-        float shininess;
-        float ior;      // index of refraction
-        float dissolve; // 1 == opaque; 0 == fully transparent
-        // illumination model (see http://www.fileformat.info/format/material/)
-        int illum;
+    float ambient[3];
+    float diffuse[3];
+    float specular[3];
+    float transmittance[3];
+    float emission[3];
+    float shininess;
+    float ior;      // index of refraction
+    float dissolve; // 1 == opaque; 0 == fully transparent
+    // illumination model (see http://www.fileformat.info/format/material/)
+    int illum;
 
-        int dummy; // Suppress padding warning.
+    int dummy; // Suppress padding warning.
 
-        std::string ambient_texname;            // map_Ka
-        std::string diffuse_texname;            // map_Kd
-        std::string specular_texname;           // map_Ks
-        std::string specular_highlight_texname; // map_Ns
-        std::string bump_texname;               // map_bump, bump
-        std::string displacement_texname;       // disp
-        std::string alpha_texname;              // map_d
-        std::map<std::string, std::string> unknown_parameter;
-    } material_t;
+    std::string ambient_texname;            // map_Ka
+    std::string diffuse_texname;            // map_Kd
+    std::string specular_texname;           // map_Ks
+    std::string specular_highlight_texname; // map_Ns
+    std::string bump_texname;               // map_bump, bump
+    std::string displacement_texname;       // disp
+    std::string alpha_texname;              // map_d
+    std::map<std::string, std::string> unknown_parameter;
+} material_t;
 
     typedef struct {
         std::string name;
@@ -155,7 +155,6 @@ namespace tinyobj {
 }
 
 #ifdef TINYOBJLOADER_IMPLEMENTATION
-
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
