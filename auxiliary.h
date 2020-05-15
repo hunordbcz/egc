@@ -21,7 +21,7 @@ SDL_Event currentEvent;
 float cameraZ = 3.0f;
 
 int mouseX, mouseY;
-float rotationAngle = 80.0f;
+float rotationAngle = 3.0f;
 
 bool backFaceCulling = true;
 bool displayNormals = false;
